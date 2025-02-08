@@ -1463,10 +1463,8 @@ local function LoadOmniUSPHooks()
         Add(
             "PlayerDeath",
             "PreventKill",
-            function(player, inflictor, attacker)
-                -- Check if the player is holding a specific weapon
-                if IsValid(player:GetActiveWeapon()) and player:GetActiveWeapon():GetClass() == "omni_usp" then
-                    print(player:GetName() .. " prevented from dying due to holding the weapon!")
+            function(ply, inflictor, attacker)
+                if IsValid(ply:GetActiveWeapon()) and ply:GetActiveWeapon():GetClass() == "omni_usp" then
                     return true
                 end
 				return false
