@@ -591,7 +591,7 @@ local function Autoaim(v,self)
 			end
 end
 
-local function Timestop(v,self)
+local function Timestop(v,self) -- Oh yeah I forgot to put a note here that this function is not fully done yet.
 
     for k, v in pairs(ents.GetAll()) do		
             if v:IsNPC() or v:IsNextBot() and v:IsValid() then		    
