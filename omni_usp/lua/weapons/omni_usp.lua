@@ -1,55 +1,50 @@
-local e = FindMetaTable("Entity")
+local ent = FindMetaTable("Entity")
 
-local Remove = e.Remove
-local GetClass = e.GetClass
-local NextThink = e.NextThink
-local Input = e.Input
-local Ignite = e.Ignite
-local IsValid = e.IsValid
+local Remove = ent.Remove
+local GetClass = ent.GetClass
+local NextThink = ent.NextThink
+local Input = ent.Input
+local IsValid = ent.IsValid
 
 local Add = hook.Add
 local Call = hook.Call
 local mr = math.random
 
+local invulnerableList = {}
+
 SWEP.Author = "1999"
 SWEP.Category = "1999's Weapons (Admin)"
 SWEP.PrintName = "Omniversal USP"
-SWEP.Instructions = ""
 SWEP.Purpose = "Kill."
+
+SWEP.DrawCrosshair = true
 
 SWEP.Spawnable = true
 SWEP.AdminSpawnable = true
 SWEP.AdminOnly = true
 
-SWEP.SwayScale = 2.5
-
 SWEP.UseHands = true
+
 SWEP.ViewModelFOV = 54
 SWEP.ViewModel			= "models/weapons/c_pistol.mdl"
 SWEP.WorldModel			= "models/weapons/w_pistol.mdl"
 
-util.PrecacheModel( SWEP.ViewModel )
-util.PrecacheModel( SWEP.WorldModel )
-
-SWEP.Secondary.ClipSize		= -1
-SWEP.Secondary.DefaultClip	= -1
 SWEP.Secondary.Automatic	= true
 SWEP.Secondary.Ammo		= ""
 
 SWEP.Slot = 1
 SWEP.SlotPos = 1
 
-local ShootSound = Sound("weapons/airboat/airboat_gun_energy1.wav")
+local ShootSound = Sound("Weapon_Pistol.Single")
 
 SWEP.Primary.DefaultClip = 256
 SWEP.Primary.ClipSize = 18
 SWEP.Primary.Automatic = true
-SWEP.Primary.Ammo		= "pistol"
+SWEP.Primary.Ammo = "pistol"
 
-SWEP.DrawCrosshair = true
-
-SWEP.AutoSwitchTo = true
-SWEP.AutoSwitchFrom = true
+Add("EntityTakeDamage", "inv_control", function(ent)
+	if invulnerableList[ent] then return true end
+end)
 
 local function OwnerKillFeed(v,self)				
     net.Start('PlayerKilledNPC')
@@ -160,6 +155,7 @@ local function GetNPCNextBotTable1()
 	return t
 end
 -----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 local function Attack(v, self)
     local ply = self:GetOwner()
     local hitpos = ents.FindAlongRay(ply:GetShootPos(), ply:GetEyeTrace().HitPos, Vector(-15, -15, -15), Vector(15, 15, 15))
@@ -180,9 +176,12 @@ local function Attack(v, self)
 
             if v:IsNPC() or v:IsNextBot() and v:IsValid() then
                 CreateEntityRagdoll(v, ply, skin, self)				
-				Call( "EntityRemoved", "OverrideEntityRemoved", v )
+				HKill(v)
 				
                 v.AcceptInput = function() return false end
+				v.BehaveStart = function() return end
+				v.Initialize = function(self,...) self:Remove() return end
+				v.RunBehaviour = function(self,...) self:Remove() return end
 	            v.OnRemove = function(self,...) self:Remove() return end
 	            v.CustomThink = function(self,...) self:Remove() return end
 	            v.Think = function(self,...) self:Remove() return end
@@ -190,7 +189,8 @@ local function Attack(v, self)
                 NextThink(v, CurTime() + 3)
                 Input(v, "Kill")
 				v:Fire("Kill")
-				v:SetNoDraw(true)
+				v:SetNoDraw(false)
+				v:SetHealth(0)
                 Remove(v)
                 OwnerKillFeed(v, self)				
             end
@@ -256,10 +256,6 @@ local function DealDamage(v,self)
 				
 				v:TakeDamage(1e9,self.Owner,self.Owner)
 				v:SetHealth(0)
-				
-				if v:IsValid() then
-				    Input(v, "SelfDestruct")
-				end
 				
 				if v:GetClass()=="npc_rollermine" or v:GetClass()=="npc_combinedropship" or v:GetClass()=="npc_combinegunship" then
 				   Remove(v)
@@ -505,7 +501,6 @@ local function MultiKill(v,self)
 			   
 			   Input(v,"Kill")
 			   Remove(v)
-			   RunConsoleCommand("ent_remove")
 			   
 		       local ef = EffectData()
 	           ef:SetOrigin(v:GetPos())
@@ -746,48 +741,40 @@ local function ExplosiveBarrels(v, self)
     end
 end
 
-local function Mingebags(v, self)
-    local m = ents.Create("prop_physics")
-    if IsValid(m) then
-        m:SetModel("models/Kleiner.mdl")
-        m:SetPos(self.Owner:GetShootPos())
-        m:SetOwner(self.Owner)
-        m:Spawn()
-        m:SetCollisionGroup(20)
+local function MelonLauncher(v, self)
+    if SERVER then
+        local r = ents.Create("prop_physics")
+        if IsValid(r) then
+            r:SetModel("models/props_junk/watermelon01.mdl")
+            r:SetPos(self.Owner:EyePos() + self.Owner:GetRight() * 15 + Vector(0, 0, -3))
+            r:SetOwner(self.Owner)
+            r:Spawn()
 
-        m:CallOnRemove(
-            "killNearExplosion",
-            function()
-                for k, v in pairs(ents.FindInSphere(m:GetPos(), 250)) do
-                    if v:IsNPC() or v:IsNextBot() then					
+            local function PhysCallback(ent, data)
+                local effect = EffectData()
+                effect:SetOrigin(ent:GetPos())
+                util.Effect("BloodImpact", effect)
+                ent:Remove()
+                ent:EmitSound("physics/flesh/flesh_squishy_impact_hard2.wav", 90, 100, 1, CHAN_VOICE_BASE)
+
+                for k, v in pairs(ents.FindInSphere(r:GetPos(), 50)) do
+                    if v:IsNPC() or v:IsNextBot() then
                         Attack(v, self)
-						v:Dissolve(3)
-						Ignite( v, 3 )
                     end
                 end
             end
-        )
+            r:AddCallback("PhysicsCollide", PhysCallback)
+            invulnerableList[r] = true
 
-        local function PhysCallback(e, d)
-            if SERVER then
-			local ent =  ents.Create ("prop_combine_ball")
-			      ent:SetPos( m:GetPos() ) 
-			      ent:SetOwner( m ) 
-			      ent:Spawn() 
-			      ent:Fire("Explode", 1, 0 ) 						
-			end
-            e:Remove()
+            local phys = r:GetPhysicsObject()
+            phys:SetVelocity(self.Owner:GetAimVector() * 5000)
         end
-        m:AddCallback("PhysicsCollide", PhysCallback)
-
-        local phys = m:GetPhysicsObject()
-        phys:SetVelocity(self.Owner:GetAimVector() * 32767)
-
-        self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
-        self:SetNextSecondaryFire(CurTime() + 0.05)
-        self:EmitSound(ShootSound)
     end
+    self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
+    self:SetNextSecondaryFire(CurTime() + 0.02)
+    self:EmitSound(ShootSound)
 end
+
 
 local function BreakEntityBones(self)
     local ent = self.Owner:GetEyeTrace().Entity
@@ -1067,13 +1054,7 @@ local function StripCurrentWeapon(v,self)
 			        self.Weapon:EmitSound("common/warning.wav",75,100,1,CHAN_WEAPON)
 			        self:ShootEffects()
 			        self.Secondary.Automatic = false
-			        self:SetNextSecondaryFire(CurTime() + 0.1)
-					
-					if ( v:GetActiveWeapon()==NULL ) then
-					    self.Owner:PrintMessage( HUD_PRINTTALK, "No weapon(s) found for "..v:GetClass()..".")  
-						self.Weapon:EmitSound("friends/friend_join.wav",75,100,1,CHAN_WEAPON)
-						return false
-				    end				
+			        self:SetNextSecondaryFire(CurTime() + 0.1)			
 			    end
 			end
 	    end			
@@ -1213,9 +1194,7 @@ end
 
 local function Shockwave(v, self)
     local ply = self:GetOwner()
-    local radius = ents.FindInSphere(self.Owner:GetEyeTrace().HitPos, 2000)
-    effects.BeamRingPoint( self.Owner:GetEyeTrace().HitPos + Vector(0, 0, 0), 0.4, 0, 6000, 128, 0, Color(255, 255, 255))
-    
+	
 	local ef = EffectData()
 	ef:SetOrigin(ply:GetEyeTrace().HitPos)
 	ef:SetStart(ply:GetShootPos())
@@ -1228,6 +1207,9 @@ local function Shockwave(v, self)
     self:ShootEffects()
     self.Secondary.Automatic = false
     self:SetNextSecondaryFire(CurTime() + 0.1)
+    
+	local radius = ents.FindInSphere(self.Owner:GetEyeTrace().HitPos, 2000)
+    effects.BeamRingPoint( self.Owner:GetEyeTrace().HitPos + Vector(0, 0, 0), 0.4, 0, 6000, 128, 0, Color(255, 255, 255))
 
     for k, v in pairs(radius) do
         if v ~= self.Owner then
@@ -1236,10 +1218,10 @@ local function Shockwave(v, self)
                 v:Dissolve(3)
                 v:TakeDamage(1e9, self.Owner, self.Owner)
             end
-            if v:IsNPC() or v:IsNextBot() and v:IsValid() then
+            if v:IsNPC() or v:IsNextBot() and v:IsValid() and ent then
 			    v:Dissolve(3)
-                NextThink(v, CurTime() + 5)
-                v:TakeDamage(1e9, self.Owner, self.Owner)
+			    v:TakeDamage(1e9, self.Owner, self.Owner)
+				HKill(ent)
             end
         end
     end
@@ -1260,15 +1242,18 @@ local function UniversalBullet(v,self)
 	local l = {}
 	
 	l.Callback = function(a, tr, dmginfo)
-	    if IsValid(tr.Entity) and ( tr.Hit ) then return end
-		    tr.Entity:SetHealth(-2147483648)
-			tr.Entity:Ignite(3)
-			tr.Entity:Dissolve(1)
-			tr.Entity:TakeDamage(tr.Entity:GetMaxHealth(), self.Owner, self.Owner)
-			
-			dmginfo:SetDamage(1/0)
-			dmginfo:SetDamageBonus(1/0)
+	    local t = tr.Entity
+	    if IsValid(t) and ( tr.Hit ) then
+		    t:SetHealth(0)
+			t:Ignite(3)
+			t:Dissolve(1)
+			NextThink(t, CurTime() + 5 )		
+			HKill(t)
+		
+			dmginfo:SetDamage(math.huge)
+			dmginfo:SetDamageBonus(math.huge)
 			dmginfo:SetDamageType(bit.bor(DMG_AIRBOAT,DMG_BLAST,DMG_NEVERGIB,DMG_DIRECT,DMG_ENERGYBEAM))
+	    end
 			
      if tr.Entity:GetClass()=="prop_ragdoll" then
 			timer.Create(tostring(e), 0.05, 10 * 17, function()
@@ -1285,22 +1270,6 @@ local function UniversalBullet(v,self)
 		end	
 	end
 	
-	    for k,v in pairs (ents.FindInSphere(self.Owner:GetEyeTrace().HitPos,50)) do	
-	        if v~=self.Owner and IsValid(v) then	       
-	            if v:GetClass()~="predicted_viewmodel" and not(v:IsWeapon() and v:GetOwner()==self.Owner) and v:GetClass()~="gmod_hands" and v:IsValid() then			  
-			        v:Dissolve(mr(0,1,2,3))
-					v:Ignite(3)
-				    v:TakeDamage(math.huge,self.Owner,self.Owner)
-					v:SetHealth(-2147483648)
-										
-				    v.AcceptInput = function() return false end
-				    v.OnDeath = function(self,...) self:Remove() end
-				    v.OnRemove = function(self,...) self:Remove() end
-	                v.OnTakeDamage = function(self,...) self:Remove() end			  
-		        end
-	        end
-        end
-	
     l.Num = 1
     l.Src = self.Owner:GetShootPos()			
     l.Dir = self.Owner:GetAimVector()
@@ -1310,12 +1279,12 @@ local function UniversalBullet(v,self)
     l.TracerName 	= "tool_tracer_red"
 	l.Attacker = self.Owner
 
-    self:FireBullets(l)
+    ply:FireBullets(l)
 	
     ply:LagCompensation(false)
 end
 
-function SWEP:Think()
+function SWEP:Think()	
     local labels = {
         {"Default", "", "1"},
         {"Silent Kill", "", "2"},
@@ -1335,7 +1304,7 @@ function SWEP:Think()
 		{"Explosion", "", "16"},
 		{"Large Explosion", "", "17"},
 		{"Explosive Barrels", "", "18"},
-		{"Mingebags", "", "19"},
+		{"Melon Launcher", "", "19"},
 		{"Break Entity Bones", "", "20"},
 		{"Remove All", "", "21"},
 		{"Remove All NPC's", "", "22"},
@@ -1373,7 +1342,7 @@ function SWEP:Think()
             self.menu1:SetTitle("Omniversal USP - Fire Modes")
             self.menu1:SetVisible(true)
             self.menu1:SetDraggable(true)
-            self.menu1:ShowCloseButton(true)
+            self.menu1:ShowCloseButton(false)
             gui.EnableScreenClicker(true)
 
             local scrollPanel = vgui.Create("DScrollPanel", self.menu1)
@@ -1409,6 +1378,7 @@ function SWEP:Think()
             end
         )
     end
+	return true
 end
 
 function SWEP:DrawWorldModel()
@@ -1439,44 +1409,6 @@ function SWEP:FireAnimationEvent(pos,ang,event,options)
     return true
 end
 
-local function LoadOmniUSPHooks()
-    if SERVER then
-        Add(
-            "EntityRemoved",
-            "OverrideEntityRemoved",
-            function(ent)
-                if ent:IsNextBot() or ent:IsNPC() and IsValid(ent) then
-                    return
-                end
-            end
-        )
-        Add(
-            "PlayerShouldTakeDamage",
-            "BlockDamage",
-            function(ply, attacker)
-                if IsValid(ply:GetActiveWeapon()) and ply:GetActiveWeapon():GetClass() == "omni_usp" then
-                    return false
-                end
-                return true
-            end
-        )
-        Add(
-            "PlayerDeath",
-            "PreventKill",
-            function(ply, inflictor, attacker)
-                if IsValid(ply:GetActiveWeapon()) and ply:GetActiveWeapon():GetClass() == "omni_usp" then
-                    return true
-                end
-				return false
-            end
-        )
-    end
-end
-
-function SWEP:OnRemove()
-    return false
-end
-
 function SWEP:Initialize()
     LoadOmniUSPHooks()
     self:SetWeaponHoldType("pistol")
@@ -1485,16 +1417,16 @@ function SWEP:Initialize()
     end
 end
 
+function SWEP:OnRemove()
+    return false
+end
+
 function SWEP:Deploy()
     if self.Owner:IsOnFire(true) then
         self.Owner:Extinguish()
 	end
 	self.Owner:SetHealth(1000)
 	return true
-end
-
-function SWEP:AdjustMouseSensitivity()
-	return 0.5
 end
 
 function SWEP:Holster()
@@ -1510,16 +1442,16 @@ function SWEP:PrimaryAttack()
 	
 	for k,v in pairs(ents.FindAlongRay(ply:GetShootPos(), ply:GetEyeTrace().HitPos, Vector(-15,-15,-15), Vector(15,15,15))) do
 		if IsValid(v) and (v:IsNPC() or v:IsNextBot() or v:IsPlayer() and (v ~= ply)) then	
-			Attack(v,self)			
+			Attack(v,self)
 			local rnname = rnn()
 			v:SetSaveValue('m_iName',rnname)
 			RunConsoleCommand('ent_remove_all',rnname)
-		    
-			--local hitPhys = v:GetPhysicsObject()
-			--if IsValid(hitphys) then
-				--local vel = (v:GetPos() - self.Owner:GetPos()):GetNormalized()
-				--hitPhys:SetVelocity(vel * 1e9)
-			--end
+		    		
+			local hitPhys = v:GetPhysicsObject()
+			if IsValid(hitphys) then
+				local vel = (v:GetPos() - self.Owner:GetPos()):GetNormalized()
+				hitPhys:SetVelocity(vel * 1e9)
+			end
 		end
 	end
     
@@ -1534,11 +1466,9 @@ function SWEP:PrimaryAttack()
 		local t = tr.Entity
 		if !IsValid(t) and t:IsNPC() or t:IsNextBot() and tr.Hit then
 			Attack(t,self)
-			Input(t, "Kill")		
-			t:Fire("Kill")
+			HKill(t)	
 			
 			d:SetDamage(math.huge)
-			d:ScaleDamage(1e9)
 			d:SetDamageType(bit.bor(DMG_AIRBOAT,DMG_BLAST,DMG_NEVERGIB,DMG_DIRECT))
 			t:TakeDamageInfo(d)
 		end
@@ -1550,11 +1480,11 @@ function SWEP:PrimaryAttack()
     l.Dir = self.Owner:GetAimVector()
     l.Force = math.huge
     l.Damage = math.huge
-    l.Trace = 1
+    l.Tracer = 1
     l.TracerName = "AirboatGunTracer"
     l.Attacker = ply
 
-    self:FireBullets(l)
+    ply:FireBullets(l)
 	
 	if ply:IsPlayer() then
 	    ply:LagCompensation(false)
@@ -1617,7 +1547,7 @@ function SWEP:SecondaryAttack()
                                                                             ExplosiveBarrels(v, self)
                                                                         else
                                                                             if self:GetNWInt("Mode") == 19 then
-                                                                                Mingebags(v, self)
+                                                                                MelonLauncher(v, self)
                                                                             else
                                                                                 if self:GetNWInt("Mode") == 20 then
                                                                                     BreakEntityBones(self)
