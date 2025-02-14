@@ -791,7 +791,7 @@ local function RemoveAll(v,self)
     for k, v in pairs(ents.GetAll()) do		
 	
             if string.find(v:GetClass(),"prop_*")~=nil then 		
-			    v:Remove() 			
+			    Remove(v)
 				self:EmitSound(ShootSound)
 				self.Weapon:EmitSound("common/warning.wav",75,100,1,CHAN_WEAPON)
 				self:ShootEffects()
