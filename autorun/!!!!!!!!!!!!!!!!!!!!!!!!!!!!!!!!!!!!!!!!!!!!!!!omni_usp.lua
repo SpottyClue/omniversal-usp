@@ -49,25 +49,6 @@ function LoadOmniUSPHooks()
             end
         )
         Add(
-            "CanPlayerSuicide",
-            "BlockSuicide_0003",
-            function(TwentyFive)
-                if IsValid(ply:GetActiveWeapon()) and ply:GetActiveWeapon():GetClass() == "omni_usp" then
-                    print("CPS Working.")
-                    return false
-                end
-            end
-        )
-        Add(
-            "PlayerDeathThink",
-            "BlockDeath_0004",
-            function(TwentyFive)
-                if IsValid(ply:GetActiveWeapon()) and ply:GetActiveWeapon():GetClass() == "omni_usp" then
-                    print("PDT Working.")
-                end
-            end
-        )
-        Add(
             "PlayerSwitchWeapon",
             "BlockWeaponSwitch_0005",
             function(ply, oldWep, newWep)
