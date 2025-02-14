@@ -27,8 +27,8 @@ end
 
 function EFFECT:Render()
 
-    local red = Color(0, 255, 255)
-    local red2 = Color(0, 255, 255, 255)
+    local cyan = Color(0, 255, 255)
+    local cyan2 = Color(0, 255, 255, 255)
 
 	 if self.Alpha < 1 then return end
 
@@ -43,10 +43,10 @@ function EFFECT:Render()
             local texcoord = math.Rand(0,1)
 
             for i=1,3 do
-                render.DrawBeam(startPos - norm,endPos,8,texcoord,texcoord + len / 128,red)
+                render.DrawBeam(startPos - norm,endPos,8,texcoord,texcoord + len / 128,cyan)
             end
 
-            red2.a = 128 * (1 - life)
+            cyan2.a = 128 * (1 - life)
 
-            render.DrawBeam(startPos,endPos,8,texcoord,texcoord + ((startPos - endPos):Length() / 128),red2)
+            render.DrawBeam(startPos,endPos,8,texcoord,texcoord + ((startPos - endPos):Length() / 128),cyan2)
 end
