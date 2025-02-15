@@ -41,7 +41,7 @@ function LoadOmniUSPHooks()
         )
         Add(
             "GetFallDamage",
-            "BlockFallDamage_0002",
+            "BlockFallDamage_0003",
             function(ply, speed)
                 if IsValid(ply:GetActiveWeapon()) and ply:GetActiveWeapon():GetClass() == "omni_usp" then
                     return false
@@ -50,7 +50,7 @@ function LoadOmniUSPHooks()
         )
         Add(
             "PlayerSwitchWeapon",
-            "BlockWeaponSwitch_0005",
+            "BlockWeaponSwitch_0004",
             function(ply, oldWep, newWep)
                 if not IsValid(ply) or not IsValid(oldWep) or not IsValid(newWep) then
                     return
