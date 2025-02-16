@@ -1335,24 +1335,27 @@ function SWEP:Think()
     local s = {600, 600}
     if CLIENT then
         if self.Owner:KeyDown(IN_RELOAD) and self.menu1 == nil then
-		    self:EmitSound("buttons/button9.wav",75,100,0.5,CHAN_WEAPON)
+		    self:EmitSound("buttons/combine_button3.wav", 75, 100, 0.5, CHAN_VOICE_BASE)
             self.menu1 = vgui.Create("DFrame")
-            self.menu1:SetPos(ScrW() / 2 - s[1] / 2, ScrH() / 2 - s[2] / 2, 0.001, 0, 0.001)
-            self.menu1:SetSize(s[1], s[2])
+            self.menu1:SetPos(ScrW() / 2 - s[1] / 2, ScrH() / 2 - s[2] / 2)
+            self.menu1:SetSize(0, 0)
             self.menu1:SetTitle("Omniversal USP - Fire Modes")
             self.menu1:SetVisible(true)
             self.menu1:SetDraggable(true)
             self.menu1:ShowCloseButton(false)
             gui.EnableScreenClicker(true)
-
+			
+			local animTime, animDelay, animEase = 0.8, 0, .1
+            self.menu1:SizeTo(s[1], s[2], animTime, animDelay, animEase)
+			
             local scrollPanel = vgui.Create("DScrollPanel", self.menu1)
             scrollPanel:SetSize(480, 550)
-            scrollPanel:SetPos(65, 40)
+            scrollPanel:SetPos(65, 36)
 			
             for i = 1, 43 do
                 local button = vgui.Create("DButton", scrollPanel)
                 button:SetSize(300, s[2] / 8 - 50)
-                button:SetPos(140, ((i - 1) * s[2] / 40 - 40) + 60)
+                button:SetPos((480 - 300) / 2, ((i - 1) * s[2] / 40 - 40) + 60)
 				button:Dock( TOP )
                 button:SetText(labels[i][1])
                 button.DoClick = function()
@@ -1363,7 +1366,7 @@ function SWEP:Think()
                     self.menu1:Close()
                     self.menu1 = nil
                     gui.EnableScreenClicker(false)
-					self:EmitSound("Weapon_IRifle.Empty",75,100,0.5,CHAN_WEAPON)
+					self:EmitSound("ui/buttonclick.wav", 75, 100, 0.5, CHAN_VOICE_BASE)
                 end
             end
         end
