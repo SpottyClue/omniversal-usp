@@ -76,7 +76,7 @@ local function CrazyRag(v)
 			rd:StopSound("ambient/levels/citadel/field_loop3.wav")
 		end
 	end)
-    timer.Create( tostring(e), 0.05, 30 * 30, function()
+    timer.Create( tostring(e), 0.05, 10 * 25, function()
              if rd:IsValid() then
                  for i = 1, rd:GetPhysicsObjectCount() - 1 do
                      local phys = rd:GetPhysicsObjectNum(i)
