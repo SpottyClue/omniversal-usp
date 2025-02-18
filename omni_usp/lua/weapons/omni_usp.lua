@@ -1,10 +1,10 @@
-local ent = FindMetaTable("Entity")
+local e = FindMetaTable("Entity")
 
-local Remove = ent.Remove
-local GetClass = ent.GetClass
-local NextThink = ent.NextThink
-local Input = ent.Input
-local IsValid = ent.IsValid
+local Remove = e.Remove
+local GetClass = e.GetClass
+local NextThink = e.NextThink
+local Input = e.Input
+local IsValid = e.IsValid
 
 local Add = hook.Add
 local Call = hook.Call
@@ -149,6 +149,25 @@ local function GetNPCNextBotTable1()
 	local t = {}
 	for k,v in pairs(ents.GetAll()) do
 		if v:IsNextBot() or v:IsNPC() then
+			table.insert(t, v)
+		end
+	end
+	return t
+end
+
+local function DoEntsExist()
+	for k,v in pairs(ents.GetAll()) do
+		if v:IsNPC() or v:IsNextBot() then
+			return true
+		end
+	end
+	return false
+end
+
+local function FilterEntities(ent)
+	local t = {}
+	for k,v in pairs(ents.GetAll()) do
+		if v != ent then
 			table.insert(t, v)
 		end
 	end
@@ -1284,6 +1303,60 @@ local function UniversalBullet(v,self)
     ply:LagCompensation(false)
 end
 
+local function ShuffleRelationships(v, self)
+    if DoEntsExist() then
+        self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
+        self:EmitSound("common/warning.wav", 120, 100, 1, CHAN_VOICE_BASE)
+        self:EmitSound(ShootSound, 75, 100, 0.2)
+    end
+    for k, v in pairs(ents.GetAll()) do
+        if v:IsNPC() and SERVER then
+            for l, o in pairs(FilterEntities(v)) do
+                v:AddEntityRelationship(o, D_HT, 99)
+            end
+            self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
+            self:SetNextSecondaryFire(CurTime() + 0.5)
+        end
+        if v.SetEnemy then
+            if v.SetSelfClassRelationship and v.IsDrGNextbot then
+                v:SetSelfClassRelationship(D_HT)
+                v.Factions = {""}
+                v.SetSelfClassRelationship = function()
+                    return
+                end
+            end
+            self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
+            self:SetNextSecondaryFire(CurTime() + 0.5)
+        end
+    end
+end
+
+local function MissileLauncher(self)
+    if SERVER then
+        local m = ents.Create("rpg_missile")
+        m:SetPos(self.Owner:EyePos() + self.Owner:GetRight() * 1 + Vector(0, 0, 0))
+        m:SetAngles(self.Owner:GetForward():Angle())
+        m:Spawn()
+
+        m:SetOwner(self.Owner)
+        m:SetSaveValue("m_flDamage", 0)
+        m:SetVelocity(self.Owner:GetAimVector() * 1500)
+
+        m:CallOnRemove(
+            "BlastDamageR",
+            function()
+                util.BlastDamage(self, self.Owner, m:GetPos(), 255, 1e9)
+            end
+        )
+
+        m:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
+    end
+
+    self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
+    self:SetNextSecondaryFire(CurTime() + 0.02)
+    self:EmitSound(ShootSound, 90, 100, 1, CHAN_VOICE_BASE)
+end
+
 function SWEP:Think()	
     local labels = {
         {"Default", "", "1"},
@@ -1326,9 +1399,7 @@ function SWEP:Think()
 		{"Shockwave", "", "38"},
 		{"Universal Bullet", "", "39"},
 		{"Shuffle Relationships", "", "40"},
-		{"Set Friction", "", "41"},
-		{"Set Gravity", "", "42"},
-		{"Missile Launcher", "", "43"},
+		{"Missile Launcher", "", "41"},
         {}
     }
 
@@ -1352,7 +1423,7 @@ function SWEP:Think()
             scrollPanel:SetSize(480, 550)
             scrollPanel:SetPos(65, 36)
 			
-            for i = 1, 43 do
+            for i = 1, 41 do
                 local button = vgui.Create("DButton", scrollPanel)
                 button:SetSize(300, s[2] / 8 - 50)
                 button:SetPos((480 - 300) / 2, ((i - 1) * s[2] / 40 - 40) + 60)
@@ -1613,10 +1684,10 @@ function SWEP:SecondaryAttack()
 																																							    UniversalBullet(v,self) 
                                                                                                                                                             else
                                                                                                                                                                 if self:GetNWInt("Mode") == 40 then
-
+																																									ShuffleRelationships(v, self)
                                                                                                                                                                 else
                                                                                                                                                                     if self:GetNWInt("Mode") == 41 then
-
+																																										MissileLauncher(self)
                                                                                                                                                                     else
                                                                                                                                                                         if self:GetNWInt("Mode") == 42 then
 
