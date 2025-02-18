@@ -54,6 +54,41 @@ local function OwnerKillFeed(v,self)
     net.Broadcast()	
 end
 
+local function CrazyRag(v)
+    if SERVER then
+    local rd = ents.Create("prop_ragdoll")
+    rd:SetPos(v:GetPos())
+    rd:SetAngles(v:GetAngles())
+    rd:SetModel(v:GetModel())
+    rd:Spawn()
+    rd.OwnerINT = v:EntIndex()
+    rd.PhysgunPickup = true
+    rd.CanTool = true
+    rd:SetUseType(SIMPLE_USE)
+	rd:EmitSound("ambient/atmosphere/cave_hit"..mr(1,6)..".wav", 100 ,100, 1, CHAN_VOICE_BASE)
+	rd:EmitSound("ambient/levels/citadel/field_loop"..mr(1,3)..".wav", 75, 100, 1, CHAN_VOICE_BASE)
+	timer.Simple( mr(7,8,9,10), function()
+	    if rd and IsValid(rd) then
+		    rd:Dissolve(1)
+			rd:EmitSound("ambient/energy/weld1.wav")
+			rd:StopSound("ambient/levels/citadel/field_loop1.wav")
+			rd:StopSound("ambient/levels/citadel/field_loop2.wav")
+			rd:StopSound("ambient/levels/citadel/field_loop3.wav")
+		end
+	end)
+    timer.Create( tostring(e), 0.03, 30 * 30, function()
+             if rd:IsValid() then
+                 for i = 1, rd:GetPhysicsObjectCount() - 1 do
+                     local phys = rd:GetPhysicsObjectNum(i)
+                     if phys:IsValid() then
+                         local randomVelocity = Vector(mr(-10, 10), mr(-10, 10), mr(-1, 1)) * mr(100, 500)
+                         phys:SetVelocity(randomVelocity)
+                     end
+                 end
+             end
+        end)
+    end
+end
 -----------------------------------------------------------------------------
 -- Taken from the Long Devplat Revolver
 local function ClassName(ent)
@@ -1357,6 +1392,90 @@ local function MissileLauncher(self)
     self:EmitSound(ShootSound, 90, 100, 1, CHAN_VOICE_BASE)
 end
 
+local function Teleport(self)
+    local ply = self:GetOwner()
+	local pos = ply:GetEyeTrace().HitPos
+	
+	if SERVER and util.IsInWorld(pos) then
+		self.Owner:SetPos(pos)
+	end
+	
+    self:EmitSound("common/warning.wav", 75, 100, 1, CHAN_WEAPON)
+    self:ShootEffects()
+    self.Secondary.Automatic = false
+    self:SetNextSecondaryFire(CurTime() + 0.1)	   
+end
+
+local function TeleportEntities(ent, self) -- not gonna bother working with hooks, this also works like this too.
+    self.Secondary.Automatic = true
+    local pos = self.Owner:GetShootPos() + self.Owner:GetForward() * 100
+	for _, ent in pairs(ents.GetAll()) do
+		if ent:IsNPC() or ent:IsNextBot() then
+			ent:SetPos(pos)
+			NextThink(ent, CurTime() + 1e9)
+			
+			timer.Simple(0.01, function()
+            if !IsValid(ent) then return end
+                NextThink(ent, CurTime() + 0)
+            end)
+		end
+	end
+end
+
+local function SuperCombineMortar(v, self)
+    local ply = self:GetOwner()
+	
+	local ef = EffectData()
+	ef:SetOrigin(ply:GetEyeTrace().HitPos)
+	ef:SetStart(ply:GetShootPos())
+	ef:SetAttachment(1)
+	ef:SetEntity(self)
+	for i = 1, 5 do
+	   util.Effect("ToolTracer", ef)
+	end
+	
+	local ef = EffectData()
+	ef:SetOrigin(ply:GetEyeTrace().HitPos)
+	ef:SetNormal(ply:GetEyeTrace().HitNormal)
+	ef:SetRadius(100)
+    util.Effect("AR2Explosion", ef)
+
+	self:EmitSound(ShootSound)
+    self:EmitSound("Weapon_Mortar.Impact", 75, 100, 1, CHAN_VOICE_BASE)
+    self:ShootEffects()
+    self.Secondary.Automatic = false
+    self:SetNextSecondaryFire(CurTime() + 0.1)
+    
+	local rs = ents.FindInSphere(ply:GetEyeTrace().HitPos, 300)
+    effects.BeamRingPoint( ply:GetEyeTrace().HitPos + Vector(0, 0, 0), 0.2, 0, 450, 55, 0, Color(255, 255, 255))
+
+    for k, v in pairs(rs) do
+        if v ~= self.Owner then
+            if v:IsPlayer() then
+			    v:Kill()
+                v:Dissolve(1)
+                v:TakeDamage(1e9, self.Owner, self.Owner)
+            end
+            if v:IsNPC() or v:IsNextBot() and v:IsValid() then
+				HKill(ent)
+				v:Dissolve(1)
+            end
+        end
+    end
+end
+
+local function CrazyRagdoll(v, self)
+    local hitpos = ents.FindAlongRay(self.Owner:GetShootPos() + self.Owner:GetAimVector(), self.Owner:GetEyeTrace().HitPos)
+    for k, v in pairs(hitpos) do
+        if v ~= self.Owner and IsValid(v) then
+            if v:IsNPC() or v:IsNextBot() then
+               HKill(v)
+			   CrazyRag(v)
+            end
+        end
+    end
+end
+
 function SWEP:Think()	
     local labels = {
         {"Default", "", "1"},
@@ -1400,6 +1519,10 @@ function SWEP:Think()
 		{"Universal Bullet", "", "39"},
 		{"Shuffle Relationships", "", "40"},
 		{"Missile Launcher", "", "41"},
+		{"Teleport", "", "42"},
+		{"Teleport Entities", "", "43"},
+		{"Super Combine Mortar", "", "44"},
+		{"Crazy Ragdoll", "", "45"},
         {}
     }
 
@@ -1423,7 +1546,7 @@ function SWEP:Think()
             scrollPanel:SetSize(480, 550)
             scrollPanel:SetPos(65, 36)
 			
-            for i = 1, 41 do
+            for i = 1, 45 do
                 local button = vgui.Create("DButton", scrollPanel)
                 button:SetSize(300, s[2] / 8 - 50)
                 button:SetPos((480 - 300) / 2, ((i - 1) * s[2] / 40 - 40) + 60)
@@ -1517,6 +1640,7 @@ function SWEP:PrimaryAttack()
 	for k,v in pairs(ents.FindAlongRay(ply:GetShootPos(), ply:GetEyeTrace().HitPos, Vector(-15,-15,-15), Vector(15,15,15))) do
 		if IsValid(v) and (v:IsNPC() or v:IsNextBot() or v:IsPlayer() and (v ~= ply)) then	
 			Attack(v,self)
+			HKill(v)
 			local rnname = rnn()
 			v:SetSaveValue('m_iName',rnname)
 			RunConsoleCommand('ent_remove_all',rnname)
@@ -1690,16 +1814,16 @@ function SWEP:SecondaryAttack()
 																																										MissileLauncher(self)
                                                                                                                                                                     else
                                                                                                                                                                         if self:GetNWInt("Mode") == 42 then
-
+																																											Teleport(self)
                                                                                                                                                                         else
                                                                                                                                                                             if self:GetNWInt("Mode") == 43 then
-
+																																												TeleportEntities(ent, self)
                                                                                                                                                                             else
                                                                                                                                                                                 if self:GetNWInt("Mode") == 44 then
-
+																																													SuperCombineMortar(v, self)
                                                                                                                                                                                 else
                                                                                                                                                                                     if self:GetNWInt("Mode") == 45 then
-
+																																														CrazyRagdoll(v, self)
                                                                                                                                                                                     else
                                                                                                                                                                                         if self:GetNWInt("Mode") == 46 then
 
