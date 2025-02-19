@@ -1457,7 +1457,7 @@ local function SuperCombineMortar(v, self)
                 v:TakeDamage(1e9, self.Owner, self.Owner)
             end
             if v:IsNPC() or v:IsNextBot() and v:IsValid() then
-				HKill(ent)
+				HKill(v)
 				v:Dissolve(1)
             end
         end
