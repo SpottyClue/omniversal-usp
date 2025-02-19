@@ -1279,7 +1279,7 @@ local function Shockwave(v, self)
             if v:IsNPC() or v:IsNextBot() and v:IsValid() and ent then
 			    v:Dissolve(3)
 			    v:TakeDamage(1e9, self.Owner, self.Owner)
-				HKill(ent)
+				HKill(v)
             end
         end
     end
@@ -1686,8 +1686,8 @@ function SWEP:PrimaryAttack()
 	l.Spread = Vector(0, 0, 0)
     l.Src = self.Owner:GetShootPos()
     l.Dir = self.Owner:GetAimVector()
-    l.Force = math.huge
-    l.Damage = math.huge
+    l.Force = 1/0
+    l.Damage = 1/0
     l.Tracer = 1
     l.TracerName = "AirboatGunTracer"
     l.Attacker = ply
