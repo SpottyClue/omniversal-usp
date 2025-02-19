@@ -729,9 +729,11 @@ local function Explosion(v,self)
 			util.Effect("Explosion", ED)
 
 			for k,v in pairs(ents.FindInSphere(hit, 300)) do
-                if v~=self.Owner then					
-				    if v:IsNPC() or v:IsNextBot() and v:IsValid() then
-					    v:TakeDamage(math.huge,self.Owner,self.Owner)				
+                if v~=self.Owner and IsValid(v) then					
+				    if v:IsNPC() or v:IsNextBot() then
+					    CreateEntityRagdoll(v, ply, skin, self)
+						HKill(v)
+						OwnerKillFeed(v,self)				
 				    end
 	            end			
             end
@@ -747,9 +749,11 @@ local function LargeExplosion(v,self)
 			util.Effect("Explosion", ED)
 
 			for k,v in pairs(ents.FindInSphere(hit, 500)) do
-                if v~=self.Owner then					
-				    if v:IsNPC() or v:IsNextBot() and v:IsValid() then
-					    v:TakeDamage(math.huge,self.Owner,self.Owner)						
+                if v~=self.Owner and IsValid(v) then					
+				    if v:IsNPC() or v:IsNextBot() then
+					    CreateEntityRagdoll(v, ply, skin, self)
+						HKill(v)
+						OwnerKillFeed(v,self)						
 				    end
 	            end			
             end
