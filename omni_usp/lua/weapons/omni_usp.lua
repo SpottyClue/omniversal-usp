@@ -65,9 +65,9 @@ local function CrazyRag(v)
     rd.PhysgunPickup = true
     rd.CanTool = true
     rd:SetUseType(SIMPLE_USE)
-	rd:EmitSound("ambient/atmosphere/cave_hit"..mr(1,6)..".wav", 100 ,100, 1, CHAN_VOICE_BASE)
-	rd:EmitSound("ambient/levels/citadel/field_loop"..mr(1,3)..".wav", 75, 100, 1, CHAN_VOICE_BASE)
-	timer.Simple( mr(7,8,9,10), function()
+	rd:EmitSound("ambient/atmosphere/cave_hit"..mr(1,6)..".wav", 100, 100, 0.75, CHAN_VOICE_BASE)
+	rd:EmitSound("ambient/levels/citadel/field_loop"..mr(1,3)..".wav", mr(75,80,85), 100, 1, CHAN_VOICE_BASE)
+	timer.Simple( mr(7, 9, 10), function()
 	    if rd and IsValid(rd) then
 		    rd:Dissolve(1)
 			rd:EmitSound("ambient/energy/weld1.wav")
@@ -1476,6 +1476,12 @@ local function CrazyRagdoll(v, self)
                HKill(v)
 			   CrazyRag(v)
             end
+			if v:GetClass()=="npc_strider" then
+			    v:EmitSound("npc/strider/striderx_die1.wav", mr(115,100), 100, 1, CHAN_VOICE_BASE)
+			end
+			if v:GetClass()=="npc_combinegunship" then
+			    v:EmitSound("npc/combine_gunship/see_enemy.wav", mr(115,100), 100, 1, CHAN_VOICE_BASE)
+			end
         end
     end
 end
