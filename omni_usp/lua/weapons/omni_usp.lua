@@ -46,22 +46,22 @@ Add("EntityTakeDamage", "inv_control", function(ent)
 	if invulnerableList[ent] then return true end
 end)
 
-local function OwnerKillFeed(v,self)				
+local function OwnerKillFeed(ent,self)				
     net.Start('PlayerKilledNPC')
-    net.WriteString(v:GetClass())
+    net.WriteString(ent:GetClass())
     net.WriteString('omniversal_revolver')
     net.WriteEntity(self.Owner)
     net.Broadcast()	
 end
 
-local function CrazyRag(v)
+local function CrazyRag(ent)
     if SERVER then
     local rd = ents.Create("prop_ragdoll")
-    rd:SetPos(v:GetPos())
-    rd:SetAngles(v:GetAngles())
-    rd:SetModel(v:GetModel())
+    rd:SetPos(ent:GetPos())
+    rd:SetAngles(ent:GetAngles())
+    rd:SetModel(ent:GetModel())
     rd:Spawn()
-    rd.OwnerINT = v:EntIndex()
+    rd.OwnerINT = ent:EntIndex()
     rd.PhysgunPickup = true
     rd.CanTool = true
     rd:SetUseType(SIMPLE_USE)
