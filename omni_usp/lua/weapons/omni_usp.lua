@@ -1539,7 +1539,6 @@ function SWEP:Think()
     local s = {600, 600}
     if CLIENT then
         if self.Owner:KeyDown(IN_RELOAD) and self.menu1 == nil then
-		    self:EmitSound("buttons/combine_button3.wav", 75, 100, 0.5, CHAN_VOICE_BASE)
             self.menu1 = vgui.Create("DFrame")
             self.menu1:SetPos(ScrW() / 2 - s[1] / 2, ScrH() / 2 - s[2] / 2)
             self.menu1:SetSize(0, 0)
@@ -1629,11 +1628,10 @@ function SWEP:PrimaryAttack()
 			end
 		end
 	end
-    
-    self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
-    self.Owner:SetAnimation(PLAYER_ATTACK1)
+	
+    self:ShootEffects()
 	self:SetNextPrimaryFire(CurTime() + 0.01)
-    self:EmitSound(ShootSound)
+    ply:EmitSound(ShootSound)
 	
 	local l = {}
 	
@@ -1641,11 +1639,7 @@ function SWEP:PrimaryAttack()
 		local t = tr.Entity
 		if !IsValid(t) and t:IsNPC() or t:IsNextBot() and tr.Hit then
 			Attack(t,self)
-			HKill(t)	
-			
-			d:SetDamage(math.huge)
-			d:SetDamageType(bit.bor(DMG_AIRBOAT,DMG_BLAST,DMG_NEVERGIB,DMG_DIRECT))
-			t:TakeDamageInfo(d)
+			HKill(t)
 		end
     end
 
@@ -1656,7 +1650,7 @@ function SWEP:PrimaryAttack()
     l.Force = 1/0
     l.Damage = 1/0
     l.Tracer = 1
-    l.TracerName = "AirboatGunTracer"
+    l.TracerName = "AR2Tracer"
     l.Attacker = ply
 
     ply:FireBullets(l)
