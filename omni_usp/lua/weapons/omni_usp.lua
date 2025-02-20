@@ -1138,35 +1138,20 @@ local function StripAllWeapons(v,self)
 end
 
 local function DropWeapon(v,self)
-
     local hitpos = ents.FindAlongRay(self.Owner:GetShootPos() + self.Owner:GetAimVector(), self.Owner:GetEyeTrace().HitPos)
-
 	for k, v in pairs(hitpos) do
-        if v~=self.Owner and v:IsValid() then				
-			if ( v:IsPlayer()  and not v:GetOwner()==self.Owner ) then
-				v:DropWeapon(v:GetActiveWeapon())
+        if v~=self.Owner and IsValid(v) then
+		    if ( v:IsNPC() or v:IsNextBot() or v:IsPlayer() and v.GetActiveWeapon and not v:GetOwner()==self.Owner ) then
+				if v:GetActiveWeapon()==NULL then return end
+			    v:DropWeapon(v:GetActiveWeapon())
 				self:EmitSound(ShootSound)
 			    self.Weapon:EmitSound("common/warning.wav",75,100,1,CHAN_WEAPON)
 			    self:ShootEffects()
 			    self.Secondary.Automatic = false
-			    self:SetNextSecondaryFire(CurTime() + 0.1)
-				else
-				if ( v:IsNPC() or v:IsNextBot() and not v:GetOwner()==self.Owner ) then
-				    v:DropWeapon()
-				    self:EmitSound(ShootSound)
-			        self.Weapon:EmitSound("common/warning.wav",75,100,1,CHAN_WEAPON)
-			        self:ShootEffects()
-			        self.Secondary.Automatic = false
-			        self:SetNextSecondaryFire(CurTime() + 0.05)
-					
-					if v:GetActiveWeapon()==NULL then
-					    self.Owner:PrintMessage( HUD_PRINTTALK, "No weapon(s) found for "..v:GetClass()..".")  
-						self.Weapon:EmitSound("friends/friend_join.wav",75,100,1,CHAN_WEAPON)
-				    end
-			    end
-			end			
-	    end			
-    end
+			    self:SetNextSecondaryFire(CurTime() + 0.05)
+			end
+		end
+	end
 end
 
 local function Ignite(v,self)
