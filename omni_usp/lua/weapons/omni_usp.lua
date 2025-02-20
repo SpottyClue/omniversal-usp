@@ -71,6 +71,14 @@ local function CrazyRag(ent)
         rd:EmitSound("ambient/levels/citadel/field_loop"..mr(1,3)..".wav", mr(75,80,85), 100, 1, CHAN_VOICE_BASE)
 	end
 	
+	rd:CallOnRemove(
+       "stopSoundOnRemove",
+       function()
+           rd:StopSound("ambient/levels/citadel/field_loop2.wav")
+		   rd:StopSound("ambient/levels/citadel/field_loop3.wav")
+       end
+     )
+	
 	timer.Simple( mr(10, 12, 14), function()
 	    if rd and IsValid(rd) then
 		    rd:Dissolve(1)
