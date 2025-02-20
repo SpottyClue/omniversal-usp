@@ -1306,10 +1306,8 @@ local function UniversalBullet(v,self)
 			t:Ignite(3)
 			t:Dissolve(1)
 			NextThink(t, CurTime() + 5 )		
-			HKill(t)
-		
+			
 			dmginfo:SetDamage(math.huge)
-			dmginfo:SetDamageBonus(math.huge)
 			dmginfo:SetDamageType(bit.bor(DMG_AIRBOAT,DMG_BLAST,DMG_NEVERGIB,DMG_DIRECT,DMG_ENERGYBEAM))
 	    end
 			
