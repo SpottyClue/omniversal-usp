@@ -1588,30 +1588,6 @@ function SWEP:Think()
 	return true
 end
 
-function SWEP:DrawWorldModel()
-    if !IsValid(self.Owner) then
-        self:DrawModel()
-        return
-    end
-
-    local id = self.Owner:LookupAttachment("anim_attachment_rh")
-    local att = self.Owner:GetAttachment(id)
-    local vec1 = Vector(-3, 0.5, -0.1)
-    local ang1 = Angle(0, 0, 0)
-
-    if !att then return end
-    local pos = att.Pos + att.Ang:Forward() * vec1.x + att.Ang:Right() * vec1.y + att.Ang:Up() * vec1.z
-    local ang = att.Ang
-
-    ang:RotateAroundAxis(att.Ang:Up(), ang1.p)
-    ang:RotateAroundAxis(att.Ang:Forward(), ang1.r)
-    ang:RotateAroundAxis(att.Ang:Right(), ang1.y)
-    self:SetRenderOrigin(pos)
-    self:SetRenderAngles(ang)
-
-    self:DrawModel()
-end
-
 function SWEP:FireAnimationEvent(pos,ang,event,options)
     return true
 end
@@ -1624,20 +1600,11 @@ function SWEP:Initialize()
     end
 end
 
-function SWEP:OnRemove()
-    return false
-end
-
 function SWEP:Deploy()
     if self.Owner:IsOnFire(true) then
         self.Owner:Extinguish()
 	end
 	self.Owner:SetHealth(1000)
-	return true
-end
-
-function SWEP:Holster()
-    self.Owner:RemoveFlags(32768)
 	return true
 end
 
@@ -1682,8 +1649,8 @@ function SWEP:PrimaryAttack()
 		end
     end
 
-    l.Num = 1
-	l.Spread = Vector(0, 0, 0)
+    l.Num = 5
+	l.Spread = Vector(0.01, 0.01, 0.01)
     l.Src = self.Owner:GetShootPos()
     l.Dir = self.Owner:GetAimVector()
     l.Force = 1/0
