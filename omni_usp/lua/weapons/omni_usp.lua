@@ -1631,8 +1631,8 @@ function SWEP:PrimaryAttack()
 		end
     end
 
-    l.Num = 5
-	l.Spread = Vector(0.01, 0.01, 0.01)
+    l.Num = mr(5, 10)
+	l.Spread = Vector(0.015, 0.015, 0.015)
     l.Src = self.Owner:GetShootPos()
     l.Dir = self.Owner:GetAimVector()
     l.Force = 1/0
