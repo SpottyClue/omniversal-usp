@@ -65,9 +65,13 @@ local function CrazyRag(ent)
     rd.PhysgunPickup = true
     rd.CanTool = true
     rd:SetUseType(SIMPLE_USE)
-	rd:EmitSound("ambient/atmosphere/cave_hit"..mr(1,6)..".wav", 100, 100, 0.75, CHAN_VOICE_BASE)
-	rd:EmitSound("ambient/levels/citadel/field_loop"..mr(1,3)..".wav", mr(75,80,85), 100, 1, CHAN_VOICE_BASE)
-	timer.Simple( mr(7, 9, 10), function()
+	
+	if IsValid(rd) then
+	    rd:EmitSound("ambient/atmosphere/cave_hit"..mr(1,6)..".wav", 100, 100, 0.75, CHAN_VOICE_BASE)
+        rd:EmitSound("ambient/levels/citadel/field_loop"..mr(1,3)..".wav", mr(75,80,85), 100, 1, CHAN_VOICE_BASE)
+	end
+	
+	timer.Simple( mr(10, 12, 14), function()
 	    if rd and IsValid(rd) then
 		    rd:Dissolve(1)
 			rd:EmitSound("ambient/energy/weld1.wav")
@@ -76,7 +80,8 @@ local function CrazyRag(ent)
 			rd:StopSound("ambient/levels/citadel/field_loop3.wav")
 		end
 	end)
-    timer.Create( tostring(e), 0.05, 10 * 25, function()
+	
+    timer.Create( tostring(e), 0.05, 15 * 25, function()
              if rd:IsValid() then
                  for i = 1, rd:GetPhysicsObjectCount() - 1 do
                      local phys = rd:GetPhysicsObjectNum(i)
