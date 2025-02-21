@@ -6,11 +6,27 @@ local NextThink = e.NextThink
 local Input = e.Input
 local IsValid = e.IsValid
 
+local Kill = p.Kill
+local KillSilent = p.KillSilent
+
 local Add = hook.Add
 local Call = hook.Call
 local mr = math.random
+local tp = type
+local tmrsmp = timer.Simple
+local tmrcrt = timer.Create
 
 local invulnerableList = {}
+
+local function Kill(p)
+    if IsValid(p) and self:GetActiveWeapon():GetClass() == "omni_usp" then return end
+    Kill(self)
+end
+
+local function KillSilent(p)
+    if IsValid(p) and self:GetActiveWeapon():GetClass() == "omni_usp" then return end
+    KillSilent(self)
+end
 
 SWEP.Author = "1999"
 SWEP.Category = "1999's Weapons (Admin)"
@@ -79,7 +95,7 @@ local function CrazyRag(ent)
        end
      )
 	
-	timer.Simple( mr(10, 12, 14), function()
+	tmrsmp( mr(10, 12, 14), function()
 	    if rd and IsValid(rd) then
 		    rd:Dissolve(1)
 			rd:EmitSound("ambient/energy/weld1.wav")
@@ -89,8 +105,8 @@ local function CrazyRag(ent)
 		end
 	end)
 	
-    timer.Create( tostring(e), 0.05, 15 * 25, function()
-             if rd:IsValid() then
+    tmrcrt( tostring(e), 0.05, 15 * 25, function()
+             if IsValid(rd) then
                  for i = 1, rd:GetPhysicsObjectCount() - 1 do
                      local phys = rd:GetPhysicsObjectNum(i)
                      if phys:IsValid() then
@@ -230,7 +246,7 @@ local function Attack(v, self)
     for k, v in pairs(hitpos) do
         if v ~= self.Owner then
             if (v:IsPlayer() and v:Alive()) then
-                v:Kill()
+                Kill(v)
             end
 
             if v:IsVehicle() then
@@ -272,7 +288,7 @@ local function SilentKill(v, self)
     for k, v in pairs(hitpos) do
         if v ~= self.Owner then
             if (v:IsPlayer() and v:Alive()) then
-                v:Kill()
+                KillSilent(v)
             end
 
             if v:IsNPC() or v:IsNextBot() and v:IsValid() then
@@ -304,7 +320,7 @@ local function DealDamage(v,self)
     for k, v in pairs(hitpos) do
         if v ~= self.Owner then
             if (v:IsPlayer() and v:Alive() and v:HasGodMode()) then
-                v:Kill()
+                Kill(v)
             end
 
             if v:IsNPC() or v:IsNextBot() and v:IsValid() then
@@ -347,7 +363,7 @@ local function DealDamageEnhanced(v,self)
     for k, v in pairs(hitpos) do
         if v ~= self.Owner then
             if (v:IsPlayer() and v:Alive() and v:HasGodMode()) then
-                v:Kill()
+                Kill(v)
             end
 
             if v:IsNPC() or v:IsNextBot() and v:IsValid() then
@@ -503,10 +519,6 @@ local function QuickDissolve(v,self)
 
     for k, v in pairs(hitpos) do
         if v ~= self.Owner then
-            if (v:IsPlayer() and v:Alive() and v:HasGodMode()) then
-                v:Kill()
-            end
-
             if v:GetClass()~="predicted_viewmodel" and not(v:IsWeapon() and v:GetOwner()==self.Owner) and v:GetClass()~="gmod_hands" and v:IsValid() then
 			    
 				if v:IsFlagSet(FL_DISSOLVING)==true then
@@ -1270,7 +1282,7 @@ local function Shockwave(v, self)
     for k, v in pairs(radius) do
         if v ~= self.Owner then
             if v:IsPlayer() then
-			    v:Kill()
+			    Kill(v)
                 v:Dissolve(3)
                 v:TakeDamage(1e9, self.Owner, self.Owner)
             end
@@ -1452,7 +1464,7 @@ local function SuperCombineMortar(v, self)
     for k, v in pairs(rs) do
         if v ~= self.Owner then
             if v:IsPlayer() then
-			    v:Kill()
+			    Kill(v)
                 v:Dissolve(1)
                 v:TakeDamage(1e9, self.Owner, self.Owner)
             end
@@ -1633,20 +1645,24 @@ function SWEP:PrimaryAttack()
 	
     l.Callback = function(a, tr, d) 
 		local t = tr.Entity
-		if !IsValid(t) and t:IsNPC() or t:IsNextBot() and tr.Hit then
+		if !IsValid(t) and (tp(t)=="NPC" or tp(t)=="NextBot" and tr.Hit) then
 			Attack(t,self)
 			HKill(t)
+		else
+			if (t:IsPlayer() and t:Alive()) and (t ~= ply) then
+			    Kill(t)
+			end
 		end
     end
 
-    l.Num = mr(5, 10)
-	l.Spread = Vector(0.015, 0.015, 0.015)
+    l.Num = 1
+	l.Spread = Vector(0, 0, 0)
     l.Src = self.Owner:GetShootPos()
     l.Dir = self.Owner:GetAimVector()
     l.Force = 1/0
     l.Damage = 1/0
     l.Tracer = 1
-    l.TracerName = "AR2Tracer"
+    l.TracerName = "AirboatGunTracer"
     l.Attacker = ply
 
     ply:FireBullets(l)
