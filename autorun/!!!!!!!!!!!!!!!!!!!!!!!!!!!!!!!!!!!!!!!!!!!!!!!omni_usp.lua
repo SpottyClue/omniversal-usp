@@ -48,39 +48,6 @@ function LoadOmniUSPHooks()
                 end
             end
         )
-        Add(
-            "PlayerSwitchWeapon",
-            "BlockWeaponSwitch_0004",
-            function(ply, oldWep, newWep)
-                if not IsValid(ply) or not IsValid(oldWep) or not IsValid(newWep) then
-                    return
-                end
-                if ply:GetActiveWeapon():GetClass() == "omni_usp" then
-                    if ply:GetNWBool("IsSpawnMenuOpen", false) then
-                        return true
-                    end
-                end
-            end
-        )
-        util.AddNetworkString("SetSpawnMenuOpen")
-        net.Receive(
-            "SetSpawnMenuOpen",
-            function(len, ply)
-                local isOpen = net.ReadBool()
-                ply:SetNWBool("IsSpawnMenuOpen", isOpen)
-            end
-        )
-    else
-        Add(
-            "Think",
-            "DetectSpawnMenu",
-            function()
-                local isOpen = g_SpawnMenu and g_SpawnMenu:IsVisible()
-                net.Start("SetSpawnMenuOpen")
-                net.WriteBool(isOpen)
-                net.SendToServer()
-            end
-        )
     end
 end
 
