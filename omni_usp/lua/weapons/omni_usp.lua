@@ -76,6 +76,7 @@ local function CrazyRag(ent)
     rd:SetPos(ent:GetPos())
     rd:SetAngles(ent:GetAngles())
     rd:SetModel(ent:GetModel())
+	rd:SetColor(ent:GetColor())
     rd:Spawn()
     rd.OwnerINT = ent:EntIndex()
     rd.PhysgunPickup = true
