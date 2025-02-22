@@ -18,16 +18,6 @@ local tmrcrt = timer.Create
 
 local invulnerableList = {}
 
-local function Kill(p)
-    if IsValid(p) and self:GetActiveWeapon():GetClass() == "omni_usp" then return end
-    Kill(self)
-end
-
-local function KillSilent(p)
-    if IsValid(p) and self:GetActiveWeapon():GetClass() == "omni_usp" then return end
-    KillSilent(self)
-end
-
 SWEP.Author = "1999"
 SWEP.Category = "1999's Weapons (Admin)"
 SWEP.PrintName = "Omniversal USP"
