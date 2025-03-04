@@ -37,7 +37,7 @@ SWEP.Category = "1999's Weapons (Admin)"
 SWEP.PrintName = "Omniversal USP"
 SWEP.Purpose = "Kill."
 
-SWEP.DrawCrosshair = true
+SWEP.DrawCrosshair = false
 
 SWEP.Spawnable = true
 SWEP.AdminSpawnable = true
@@ -54,6 +54,9 @@ SWEP.Secondary.Ammo		= ""
 
 SWEP.Slot = 1
 SWEP.SlotPos = 1
+
+SWEP.SwayScale = 1.65
+SWEP.BobScale = 1
 
 local ShootSound = Sound("Weapon_Pistol.Single")
 
@@ -1598,6 +1601,17 @@ function SWEP:Think()
         )
     end
 	return true
+end
+
+function SWEP:DrawHUD()
+    local scrW, scrH = ScrW(), ScrH()
+    local crosshairSize = 5
+    local centerX, centerY = scrW / 2, scrH / 2
+
+    surface.SetDrawColor(0, 255, 0, 255)
+
+    surface.DrawLine(centerX - crosshairSize, centerY, centerX + crosshairSize, centerY)
+    surface.DrawLine(centerX, centerY - crosshairSize, centerX, centerY + crosshairSize)
 end
 
 function SWEP:FireAnimationEvent(pos,ang,event,options)
