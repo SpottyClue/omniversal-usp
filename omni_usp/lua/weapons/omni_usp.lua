@@ -126,6 +126,66 @@ local function CrazyRag(ent)
         end)
     end
 end
+local function CrazyRagV(ent)
+    if IsValid(ent) and SERVER then
+    local rdv = ents.Create("prop_ragdoll")
+    rdv:SetPos(ent:GetPos())
+    rdv:SetAngles(ent:GetAngles())
+    rdv:SetModel(ent:GetModel())
+	rdv:SetColor(ent:GetColor())
+    rdv:Spawn()
+    rdv.OwnerINT = ent:EntIndex()
+    rdv.PhysgunPickup = true
+    rdv.CanTool = true
+    rdv:SetUseType(SIMPLE_USE)
+	
+	if IsValid(rdv) then
+	    rdv:EmitSound("ambient/levels/citadel/field_loop3.wav", 100, 100, 1, CHAN_VOICE_BASE)
+	end
+	
+	rdv:CallOnRemove(
+       "stopSoundOnRemove",
+       function()
+           rdv:StopSound("ambient/levels/citadel/field_loop3.wav")
+       end
+     )
+	
+	tmrsmp( mr(12, 14), function()
+	    if rdv and IsValid(rdv) then
+		    effects.BeamRingPoint( rdv:GetPos() + Vector(0, 0, 60), 0.4, 0, 2000, 55, 0, Color(255, 255, 255))
+			effects.BeamRingPoint( rdv:GetPos() + Vector(0, 0, 60), 0.6, 0, 500, 55, 0, Color(255, 255, 255))
+		    rdv:Dissolve(3)
+			rdv:EmitSound("ambient/levels/labs/electric_explosion3.wav", 150, 100, 2, CHAN_VOICE_BASE)
+			rdv:StopSound("ambient/levels/citadel/field_loop3.wav", 100, 100, 1, CHAN_VOICE_BASE)
+			
+			for k, v in pairs(ents.FindInSphere(rdv:GetPos(), 600)) do
+		        if IsValid(v) and v:IsNPC() or v:IsNextBot() then
+				    v:Dissolve()
+				    SetHealth(v, 0)
+			        TakeDamage(v, 1e9, rdv, rdv)
+				else
+				    if v:IsPlayer() then
+					    v:Dissolve(3)
+					end
+			    end
+		    end		
+		end
+	end)
+	
+    tmrcrt( tostring(e), 0.01, 40 * 50, function()
+             if IsValid(rdv) then
+                 for i = 1, rdv:GetPhysicsObjectCount() - 1 do
+                     local phys = rdv:GetPhysicsObjectNum(i)
+                     if phys:IsValid() then
+                         local randomVelocity = Vector(mr(-550, 550), mr(-550, 550), mr(-550, 550)) * mr(500, 1000)
+                         phys:SetVelocity(randomVelocity)
+						 phys:SetMass(50000)
+                     end
+                 end
+             end
+        end)
+    end
+end
 -----------------------------------------------------------------------------
 -- Taken from the Long Devplat Revolver
 local function ClassName(ent)
@@ -1502,6 +1562,21 @@ local function CrazyRagdoll(v, self)
     end
 end
 
+local function CrazyRagdollViolent(v, self)
+    local hitpos = ents.FindAlongRay(self.Owner:GetShootPos() + self.Owner:GetAimVector(), self.Owner:GetEyeTrace().HitPos)
+    for k, v in pairs(hitpos) do
+        if v ~= self.Owner and IsValid(v) then
+            if v:IsNPC() or v:IsNextBot() then
+			   HKill(v)
+			   v:Fire("Kill")
+			   NextThink(v, CurTime() + 0.5)
+			   Input(v, "Kill")
+			   CrazyRagV(v)
+            end
+        end
+    end
+end
+
 function SWEP:Think()	
     local labels = {
         {"Default", "", "1"},
@@ -1549,6 +1624,7 @@ function SWEP:Think()
 		{"Teleport Entities", "", "43"},
 		{"Super Combine Mortar", "", "44"},
 		{"Crazy Ragdoll", "", "45"},
+		{"Crazy Ragdoll (Violent)", "", "46"},
         {}
     }
 
@@ -1571,7 +1647,7 @@ function SWEP:Think()
             scrollPanel:SetSize(480, 550)
             scrollPanel:SetPos(65, 36)
 			
-            for i = 1, 45 do
+            for i = 1, 46 do
                 local button = vgui.Create("DButton", scrollPanel)
                 button:SetSize(300, s[2] / 8 - 50)
                 button:SetPos((480 - 300) / 2, ((i - 1) * s[2] / 40 - 40) + 60)
@@ -1828,8 +1904,8 @@ function SWEP:SecondaryAttack()
 																																														CrazyRagdoll(v, self)
                                                                                                                                                                                     else
                                                                                                                                                                                         if self:GetNWInt("Mode") == 46 then
-
-                                                                                                                                                                                        else
+																																														    CrazyRagdollViolent(v, self)
+																																														else
                                                                                                                                                                                             if self:GetNWInt("Mode") == 47 then
 
                                                                                                                                                                                             else
