@@ -1577,7 +1577,16 @@ local function CrazyRagdollViolent(v, self)
     end
 end
 
-function SWEP:Think()	
+function SWEP:Think()
+	if SERVER then
+	    if IsValid(self) and self.Owner:KeyReleased(IN_ATTACK) or self.Owner:KeyReleased(IN_ATTACK2) and IsValid(self.Weapon) then
+		    timer.Create( "idle2", 0.25, 1, function()
+	            if IsValid(self.Weapon) then
+	                self.Weapon:SendWeaponAnim( ACT_VM_IDLE ) 
+		        end
+	        end)
+		end
+	end
     local labels = {
         {"Default", "", "1"},
         {"Silent Kill", "", "2"},
@@ -1707,6 +1716,11 @@ function SWEP:Deploy()
         self.Owner:Extinguish()
 	end
 	self.Owner:SetHealth(1000)
+	timer.Create( "idle", 0.2, 1, function()
+	    if IsValid(self.Weapon) then
+	        self.Weapon:SendWeaponAnim( ACT_VM_IDLE ) 
+		end
+	end)
 	return true
 end
 
