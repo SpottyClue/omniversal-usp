@@ -1,4 +1,5 @@
 local e = FindMetaTable("Entity")
+local p = FindMetaTable("Player")
 
 local Remove = e.Remove
 local GetClass = e.GetClass
